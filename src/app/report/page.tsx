@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import html2canvas from "html2canvas"
+import { toPng } from "html-to-image"
 import { AnalysisResult } from "@/types/analysis"
 import TimingCard from "@/components/cards/TimingCard"
 import WeekdayCard from "@/components/cards/WeekdayCard"
@@ -69,27 +69,14 @@ export default function ReportPage() {
     if (!cardRef.current) return
     setSaving(true)
     try {
-      const filename = `devdna-${username ?? "me"}.png`
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-      })
+      const opts = { pixelRatio: 2, skipFonts: true, backgroundColor: "#ffffff" }
+      const dataUrl = await toPng(cardRef.current, opts)
 
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/png")
-      )
-      if (!blob) throw new Error("blob failed")
-
-      const file = new File([blob], filename, { type: "image/png" })
-
-      if (isMobile() && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file] })
+      if (isMobile()) {
+        window.open(dataUrl, "_blank")
       } else {
-        const dataUrl = canvas.toDataURL("image/png")
         const link = document.createElement("a")
-        link.download = filename
+        link.download = `devdna-${username ?? "me"}.png`
         link.href = dataUrl
         link.click()
       }
@@ -118,10 +105,10 @@ export default function ReportPage() {
           <div className="flex items-center justify-between px-6 py-5 transition-opacity group-hover:opacity-90">
             <div className="text-left">
               <p className="text-base font-bold text-white">
-                {saving ? "저장 중..." : "이미지로 저장하기"}
+                {saving ? "이미지 생성 중..." : "이미지로 저장하기"}
               </p>
               <p className="mt-0.5 text-xs text-white/70">
-                devdna-{username ?? "me"}.png
+                {isMobile() ? "새 탭에서 길게 눌러 저장" : `devdna-${username ?? "me"}.png`}
               </p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
