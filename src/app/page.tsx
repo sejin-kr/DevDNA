@@ -2,11 +2,29 @@
 
 import { signIn, signOut, useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import Image from "next/image"
+
+const TYPEWRITER_TEXT = "GitHub이 말해주는 나의 개발 스타일은?"
 
 export default function Home() {
   const { data: session } = useSession()
   const router = useRouter()
+  const [displayed, setDisplayed] = useState("")
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    let i = 0
+    const interval = setInterval(() => {
+      setDisplayed(TYPEWRITER_TEXT.slice(0, i + 1))
+      i++
+      if (i >= TYPEWRITER_TEXT.length) {
+        clearInterval(interval)
+        setDone(true)
+      }
+    }, 60)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-black">
@@ -16,7 +34,8 @@ export default function Home() {
         </h1>
         <div className="flex flex-col items-center gap-6">
           <p className="text-lg font-medium text-zinc-700 dark:text-zinc-300">
-            GitHub이 말해주는 나의 개발 스타일은?
+            {displayed}
+            <span className={done ? "animate-blink" : ""}>|</span>
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             {["⏰ 코딩 타이밍", "💻 주력 언어", "📅 활동 요일", "🔥 스트릭", "✍️ 커밋 스타일", "🧬 개발자 DNA"].map((item) => (
