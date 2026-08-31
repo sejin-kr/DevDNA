@@ -23,7 +23,7 @@ export default function ReportPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [current, setCurrent] = useState(0)
   const [showSummary, setShowSummary] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const cardRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number | null>(null)
 
@@ -32,6 +32,27 @@ export default function ReportPage() {
     if (!raw) { router.replace("/"); return }
     try { setResult(JSON.parse(raw)) } catch { router.replace("/") }
   }, [router])
+
+  // 요약 카드 진입 시 미리 이미지 생성
+  useEffect(() => {
+    if (!showSummary) {
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+      setBlobUrl(null)
+      return
+    }
+    const timer = setTimeout(async () => {
+      if (!cardRef.current) return
+      try {
+        const opts = { pixelRatio: 2, skipFonts: true, backgroundColor: "#ffffff" }
+        await toPng(cardRef.current, opts)
+        const dataUrl = await toPng(cardRef.current, opts)
+        const res = await fetch(dataUrl)
+        const blob = await res.blob()
+        setBlobUrl(URL.createObjectURL(blob))
+      } catch { /* 실패 시 버튼 비활성 유지 */ }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [showSummary])
 
   if (!result) return null
 
@@ -65,33 +86,15 @@ export default function ReportPage() {
     touchStartX.current = null
   }
 
-  async function saveCard() {
-    if (!cardRef.current) return
-    setSaving(true)
-
-    // await 이전에 탭을 열어야 Safari 팝업 차단을 피할 수 있음
-    const newTab = isMobile() ? window.open("", "_blank") : null
-
-    try {
-      const opts = { pixelRatio: 2, skipFonts: true, backgroundColor: "#ffffff" }
-      await toPng(cardRef.current, opts) // 첫 호출로 CSS/폰트 로드
-      const dataUrl = await toPng(cardRef.current, opts)
-
-      if (newTab) {
-        const res = await fetch(dataUrl)
-        const blob = await res.blob()
-        const blobUrl = URL.createObjectURL(blob)
-        newTab.location.href = blobUrl
-      } else {
-        const link = document.createElement("a")
-        link.download = `devdna-${username ?? "me"}.png`
-        link.href = dataUrl
-        link.click()
-      }
-    } catch {
-      newTab?.close()
-    } finally {
-      setSaving(false)
+  function saveCard() {
+    if (isMobile()) {
+      if (blobUrl) window.open(blobUrl, "_blank")
+    } else {
+      if (!blobUrl) return
+      const link = document.createElement("a")
+      link.download = `devdna-${username ?? "me"}.png`
+      link.href = blobUrl
+      link.click()
     }
   }
 
@@ -108,14 +111,14 @@ export default function ReportPage() {
 
         <button
           onClick={saveCard}
-          disabled={saving}
+          disabled={!blobUrl}
           className="group w-full max-w-[400px] cursor-pointer overflow-hidden rounded-3xl disabled:cursor-not-allowed disabled:opacity-60"
           style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)" }}
         >
           <div className="flex items-center justify-between px-6 py-5 transition-opacity group-hover:opacity-90">
             <div className="text-left">
               <p className="text-base font-bold text-white">
-                {saving ? "이미지 생성 중..." : "이미지로 저장하기"}
+                {blobUrl ? "이미지로 저장하기" : "이미지 생성 중..."}
               </p>
               <p className="mt-0.5 text-xs text-white/70">
                 devdna-{username ?? "me"}.png
