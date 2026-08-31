@@ -99,7 +99,7 @@ export default function ReportPage() {
   // ── 요약 카드 뷰 ──────────────────────────────────────────────
   if (showSummary) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-zinc-50 px-4 dark:bg-black">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto bg-zinc-50 px-4 py-10 dark:bg-black">
         <div
           ref={cardRef}
           className="w-full max-w-[400px] overflow-hidden rounded-3xl bg-white shadow-xl dark:bg-zinc-900"
