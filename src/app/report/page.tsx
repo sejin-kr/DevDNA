@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { toPng } from "html-to-image"
+import { toPng, toBlob } from "html-to-image"
 import { AnalysisResult } from "@/types/analysis"
 import TimingCard from "@/components/cards/TimingCard"
 import WeekdayCard from "@/components/cards/WeekdayCard"
@@ -69,14 +69,22 @@ export default function ReportPage() {
     if (!cardRef.current) return
     setSaving(true)
     try {
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, skipFonts: true })
       const filename = `devdna-${username ?? "me"}.png`
+      const opts = { pixelRatio: 2, skipFonts: true }
 
-      if (isMobile() && navigator.share) {
-        const blob = await fetch(dataUrl).then(r => r.blob())
+      if (isMobile()) {
+        const blob = await toBlob(cardRef.current, opts)
+        if (!blob) throw new Error("blob failed")
         const file = new File([blob], filename, { type: "image/png" })
-        await navigator.share({ files: [file] })
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file] })
+        } else {
+          // Safari 구버전 fallback: 새 탭에서 열어서 길게 눌러 저장
+          const dataUrl = await toPng(cardRef.current, opts)
+          window.open(dataUrl, "_blank")
+        }
       } else {
+        const dataUrl = await toPng(cardRef.current, opts)
         const link = document.createElement("a")
         link.download = filename
         link.href = dataUrl
