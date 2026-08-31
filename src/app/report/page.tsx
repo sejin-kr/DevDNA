@@ -15,6 +15,8 @@ import SummaryCard from "@/components/cards/SummaryCard"
 
 const CARD_TITLES = ["코딩 타이밍", "활동 요일", "주력 언어", "활동 스트릭", "커밋 스타일", "개발자 DNA"]
 
+const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
 export default function ReportPage() {
   const router = useRouter()
   const { data: session } = useSession()
@@ -23,18 +25,12 @@ export default function ReportPage() {
   const [showSummary, setShowSummary] = useState(false)
   const [saving, setSaving] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
+  const touchStartX = useRef<number | null>(null)
 
   useEffect(() => {
     const raw = localStorage.getItem("devdna_result")
-    if (!raw) {
-      router.replace("/")
-      return
-    }
-    try {
-      setResult(JSON.parse(raw))
-    } catch {
-      router.replace("/")
-    }
+    if (!raw) { router.replace("/"); return }
+    try { setResult(JSON.parse(raw)) } catch { router.replace("/") }
   }, [router])
 
   if (!result) return null
@@ -52,15 +48,40 @@ export default function ReportPage() {
     <PersonaCard key="persona" data={result.persona} username={session?.user?.name ?? undefined} />,
   ]
 
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return
+    const delta = touchStartX.current - e.changedTouches[0].clientX
+    if (Math.abs(delta) < 50) return
+    if (delta > 0) {
+      if (isLast) setShowSummary(true)
+      else setCurrent((c) => Math.min(c + 1, totalCards - 1))
+    } else {
+      setCurrent((c) => Math.max(c - 1, 0))
+    }
+    touchStartX.current = null
+  }
+
   async function saveCard() {
     if (!cardRef.current) return
     setSaving(true)
     try {
-      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2 })
-      const link = document.createElement("a")
-      link.download = `devdna-${username ?? "me"}.png`
-      link.href = dataUrl
-      link.click()
+      const dataUrl = await toPng(cardRef.current, { pixelRatio: 2, skipFonts: true })
+      const filename = `devdna-${username ?? "me"}.png`
+
+      if (isMobile() && navigator.share) {
+        const blob = await fetch(dataUrl).then(r => r.blob())
+        const file = new File([blob], filename, { type: "image/png" })
+        await navigator.share({ files: [file] })
+      } else {
+        const link = document.createElement("a")
+        link.download = filename
+        link.href = dataUrl
+        link.click()
+      }
     } finally {
       setSaving(false)
     }
@@ -77,7 +98,6 @@ export default function ReportPage() {
           <SummaryCard data={result} username={username} />
         </div>
 
-        {/* 이미지 저장 카드 */}
         <button
           onClick={saveCard}
           disabled={saving}
@@ -109,22 +129,9 @@ export default function ReportPage() {
         </button>
 
         <div className="flex gap-4 text-xs text-zinc-400">
-          <button
-            onClick={() => router.push("/")}
-            className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200"
-          >
-            홈으로
-          </button>
+          <button onClick={() => router.push("/")} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">홈으로</button>
           <span>·</span>
-          <button
-            onClick={() => {
-              localStorage.removeItem("devdna_result")
-              router.push("/analyze")
-            }}
-            className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200"
-          >
-            재분석
-          </button>
+          <button onClick={() => { localStorage.removeItem("devdna_result"); router.push("/analyze") }} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
         </div>
       </div>
     )
@@ -137,6 +144,8 @@ export default function ReportPage() {
         ref={cardRef}
         className="w-full max-w-[400px] overflow-hidden rounded-3xl bg-white shadow-xl dark:bg-zinc-900"
         style={{ minHeight: 540 }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {cards[current]}
       </div>
@@ -171,29 +180,11 @@ export default function ReportPage() {
       </div>
 
       <div className="flex gap-4 text-xs text-zinc-400">
-        <button
-          onClick={() => router.push("/")}
-          className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200"
-        >
-          홈으로
-        </button>
+        <button onClick={() => router.push("/")} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">홈으로</button>
         <span>·</span>
-        <button
-          onClick={() => {
-            localStorage.removeItem("devdna_result")
-            router.push("/analyze")
-          }}
-          className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200"
-        >
-          재분석
-        </button>
+        <button onClick={() => { localStorage.removeItem("devdna_result"); router.push("/analyze") }} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
         <span>·</span>
-        <button
-          onClick={saveCard}
-          className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200"
-        >
-          현재 카드 저장
-        </button>
+        <button onClick={saveCard} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">현재 카드 저장</button>
       </div>
     </div>
   )

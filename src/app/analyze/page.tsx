@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 
@@ -18,6 +18,8 @@ export default function AnalyzePage() {
   const [stepIndex, setStepIndex] = useState(0)
   const [done, setDone] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const apiReady = useRef(false)
+  const stepsReady = useRef(false)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -27,7 +29,15 @@ export default function AnalyzePage() {
     if (status !== "authenticated") return
 
     const interval = setInterval(() => {
-      setStepIndex((prev) => Math.min(prev + 1, STEPS.length - 1))
+      setStepIndex((prev) => {
+        const next = prev + 1
+        if (next >= STEPS.length - 1) {
+          clearInterval(interval)
+          stepsReady.current = true
+          if (apiReady.current) setDone(true)
+        }
+        return Math.min(next, STEPS.length - 1)
+      })
     }, 900)
 
     const useMock = process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("mock") === "true"
@@ -39,10 +49,9 @@ export default function AnalyzePage() {
         return res.json()
       })
       .then((data) => {
-        clearInterval(interval)
         localStorage.setItem("devdna_result", JSON.stringify(data))
-        setStepIndex(STEPS.length - 1)
-        setDone(true)
+        apiReady.current = true
+        if (stepsReady.current) setDone(true)
       })
       .catch(() => {
         clearInterval(interval)
