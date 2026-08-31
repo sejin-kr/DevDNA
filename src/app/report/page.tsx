@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { toPng, toBlob } from "html-to-image"
+import html2canvas from "html2canvas"
 import { AnalysisResult } from "@/types/analysis"
 import TimingCard from "@/components/cards/TimingCard"
 import WeekdayCard from "@/components/cards/WeekdayCard"
@@ -70,21 +70,24 @@ export default function ReportPage() {
     setSaving(true)
     try {
       const filename = `devdna-${username ?? "me"}.png`
-      const opts = { pixelRatio: 2, skipFonts: true }
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      })
 
-      if (isMobile()) {
-        const blob = await toBlob(cardRef.current, opts)
-        if (!blob) throw new Error("blob failed")
-        const file = new File([blob], filename, { type: "image/png" })
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file] })
-        } else {
-          // Safari 구버전 fallback: 새 탭에서 열어서 길게 눌러 저장
-          const dataUrl = await toPng(cardRef.current, opts)
-          window.open(dataUrl, "_blank")
-        }
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, "image/png")
+      )
+      if (!blob) throw new Error("blob failed")
+
+      const file = new File([blob], filename, { type: "image/png" })
+
+      if (isMobile() && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file] })
       } else {
-        const dataUrl = await toPng(cardRef.current, opts)
+        const dataUrl = canvas.toDataURL("image/png")
         const link = document.createElement("a")
         link.download = filename
         link.href = dataUrl
