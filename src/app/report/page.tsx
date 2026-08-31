@@ -15,7 +15,6 @@ import SummaryCard from "@/components/cards/SummaryCard"
 
 const CARD_TITLES = ["코딩 타이밍", "활동 요일", "주력 언어", "활동 스트릭", "커밋 스타일", "개발자 DNA"]
 
-const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
 export default function ReportPage() {
   const router = useRouter()
@@ -87,15 +86,14 @@ export default function ReportPage() {
   }
 
   function saveCard() {
-    if (isMobile()) {
-      if (blobUrl) window.open(blobUrl, "_blank")
-    } else {
-      if (!blobUrl) return
-      const link = document.createElement("a")
-      link.download = `devdna-${username ?? "me"}.png`
-      link.href = blobUrl
-      link.click()
-    }
+    if (!blobUrl) return
+    const link = document.createElement("a")
+    link.href = blobUrl
+    link.download = `devdna-${username ?? "me"}.png`
+    link.style.display = "none"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   // ── 요약 카드 뷰 ──────────────────────────────────────────────
@@ -112,7 +110,7 @@ export default function ReportPage() {
         <button
           onClick={saveCard}
           disabled={!blobUrl}
-          className="group w-full max-w-[400px] cursor-pointer overflow-hidden rounded-3xl disabled:cursor-not-allowed disabled:opacity-60"
+          className="group w-full max-w-[400px] overflow-hidden rounded-3xl disabled:cursor-not-allowed disabled:opacity-60"
           style={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%)" }}
         >
           <div className="flex items-center justify-between px-6 py-5 transition-opacity group-hover:opacity-90">
@@ -140,9 +138,9 @@ export default function ReportPage() {
         </button>
 
         <div className="flex gap-4 text-xs text-zinc-400">
-          <button onClick={() => router.push("/")} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">홈으로</button>
+          <button onClick={() => router.push("/")} className="hover:text-zinc-600 dark:hover:text-zinc-200">홈으로</button>
           <span>·</span>
-          <button onClick={() => { localStorage.removeItem("devdna_result"); router.push("/analyze") }} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
+          <button onClick={() => { localStorage.removeItem("devdna_result"); router.push("/analyze") }} className="hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
         </div>
       </div>
     )
@@ -166,7 +164,7 @@ export default function ReportPage() {
           <button
             key={i}
             onClick={() => setCurrent(i)}
-            className={`h-2 cursor-pointer rounded-full transition-all duration-300 ${
+            className={`h-2 rounded-full transition-all duration-300 ${
               i === current ? "w-6 bg-black dark:bg-white" : "w-2 bg-zinc-300 dark:bg-zinc-600"
             }`}
             aria-label={CARD_TITLES[i]}
@@ -178,7 +176,7 @@ export default function ReportPage() {
         <button
           onClick={() => setCurrent((c) => Math.max(0, c - 1))}
           disabled={current === 0}
-          className="flex-1 rounded-full border border-zinc-200 py-3 text-sm font-medium text-zinc-600 disabled:opacity-30 dark:border-zinc-700 dark:text-zinc-300"
+          className="flex-1 rounded-full border border-zinc-200 py-3 text-sm font-medium text-zinc-600 disabled:cursor-not-allowed disabled:opacity-30 dark:border-zinc-700 dark:text-zinc-300"
         >
           이전
         </button>
@@ -191,11 +189,11 @@ export default function ReportPage() {
       </div>
 
       <div className="flex gap-4 text-xs text-zinc-400">
-        <button onClick={() => router.push("/")} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">홈으로</button>
+        <button onClick={() => router.push("/")} className="hover:text-zinc-600 dark:hover:text-zinc-200">홈으로</button>
         <span>·</span>
-        <button onClick={() => { localStorage.removeItem("devdna_result"); router.push("/analyze") }} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
+        <button onClick={() => { localStorage.removeItem("devdna_result"); router.push("/analyze") }} className="hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
         <span>·</span>
-        <button onClick={saveCard} className="cursor-pointer hover:text-zinc-600 dark:hover:text-zinc-200">현재 카드 저장</button>
+        <button onClick={saveCard} className="hover:text-zinc-600 dark:hover:text-zinc-200">현재 카드 저장</button>
       </div>
     </div>
   )

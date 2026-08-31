@@ -68,7 +68,7 @@ export default function AnalyzePage() {
           <p className="text-xl font-medium text-black dark:text-white">{error}</p>
           <button
             onClick={() => router.push("/")}
-            className="cursor-pointer rounded-full bg-black px-6 py-2 text-sm text-white dark:bg-white dark:text-black"
+            className="rounded-full bg-black px-6 py-2 text-sm text-white dark:bg-white dark:text-black"
           >
             홈으로
           </button>
@@ -101,7 +101,7 @@ export default function AnalyzePage() {
           </div>
           <button
             onClick={() => router.push("/report")}
-            className="cursor-pointer rounded-full bg-black px-10 py-3.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+            className="rounded-full bg-black px-10 py-3.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
           >
             내 DNA 카드 확인하기 →
           </button>
