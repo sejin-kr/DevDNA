@@ -18,7 +18,7 @@ const CARD_TITLES = ["코딩 타이밍", "활동 요일", "주력 언어", "활�
 
 export default function ReportPage() {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [current, setCurrent] = useState(0)
   const [showSummary, setShowSummary] = useState(false)
@@ -27,10 +27,19 @@ export default function ReportPage() {
   const touchStartX = useRef<number | null>(null)
 
   useEffect(() => {
+    if (status === "loading") return
     const raw = localStorage.getItem("devdna_result")
     if (!raw) { router.replace("/"); return }
-    try { setResult(JSON.parse(raw)) } catch { router.replace("/") }
-  }, [router])
+    try {
+      const parsed = JSON.parse(raw)
+      if (parsed._login && parsed._login !== session?.login) {
+        localStorage.removeItem("devdna_result")
+        router.replace("/analyze")
+        return
+      }
+      setResult(parsed)
+    } catch { router.replace("/") }
+  }, [router, session?.login, status])
 
   // 요약 카드 진입 시 미리 이미지 생성
   useEffect(() => {

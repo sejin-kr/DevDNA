@@ -49,7 +49,7 @@ export default function AnalyzePage() {
         return res.json()
       })
       .then((data) => {
-        localStorage.setItem("devdna_result", JSON.stringify(data))
+        localStorage.setItem("devdna_result", JSON.stringify({ ...data, _login: session?.login }))
         apiReady.current = true
         if (stepsReady.current) setDone(true)
       })
