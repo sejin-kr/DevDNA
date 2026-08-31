@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { getToken } from "next-auth/jwt"
 import { fetchCommits } from "@/lib/github/fetchCommits"
 import { fetchRepoLanguages } from "@/lib/github/fetchRepoLanguages"
 import { MOCK_COMMITS } from "@/lib/github/mockCommits"
@@ -7,9 +6,9 @@ import { analyze } from "@/lib/analysis/analyze"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const token = await getToken({ req })
 
-  if (!session?.accessToken || !session?.login) {
+  if (!token?.accessToken || !token?.login) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -21,9 +20,9 @@ export async function GET(req: NextRequest) {
     if (useMock) {
       commits = MOCK_COMMITS
     } else {
-      const raw = await fetchCommits(session.login, session.accessToken)
+      const raw = await fetchCommits(token.login as string, token.accessToken as string)
       const repoNames = raw.map((c) => c.repoFullName)
-      const langMap = await fetchRepoLanguages(repoNames, session.accessToken)
+      const langMap = await fetchRepoLanguages(repoNames, token.accessToken as string)
       commits = raw.map((c) => ({ ...c, language: langMap[c.repoFullName] ?? null }))
     }
 
