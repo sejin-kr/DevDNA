@@ -69,14 +69,21 @@ export default function ReportPage() {
     if (!cardRef.current) return
     setSaving(true)
     try {
+      const filename = `devdna-${username ?? "me"}.png`
       const opts = { pixelRatio: 2, skipFonts: true, backgroundColor: "#ffffff" }
-      const dataUrl = await toPng(cardRef.current, opts)
 
       if (isMobile()) {
-        window.open(dataUrl, "_blank")
+        // 첫 번째 호출로 CSS/폰트 로드, 두 번째 호출에서 온전한 이미지 생성
+        await toPng(cardRef.current, opts)
+        const dataUrl = await toPng(cardRef.current, opts)
+        const res = await fetch(dataUrl)
+        const blob = await res.blob()
+        const file = new File([blob], filename, { type: "image/png" })
+        await navigator.share({ files: [file] })
       } else {
+        const dataUrl = await toPng(cardRef.current, opts)
         const link = document.createElement("a")
-        link.download = `devdna-${username ?? "me"}.png`
+        link.download = filename
         link.href = dataUrl
         link.click()
       }
