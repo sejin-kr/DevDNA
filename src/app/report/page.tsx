@@ -68,25 +68,28 @@ export default function ReportPage() {
   async function saveCard() {
     if (!cardRef.current) return
     setSaving(true)
-    try {
-      const filename = `devdna-${username ?? "me"}.png`
-      const opts = { pixelRatio: 2, skipFonts: true, backgroundColor: "#ffffff" }
 
-      if (isMobile()) {
-        // 첫 번째 호출로 CSS/폰트 로드, 두 번째 호출에서 온전한 이미지 생성
-        await toPng(cardRef.current, opts)
-        const dataUrl = await toPng(cardRef.current, opts)
+    // await 이전에 탭을 열어야 Safari 팝업 차단을 피할 수 있음
+    const newTab = isMobile() ? window.open("", "_blank") : null
+
+    try {
+      const opts = { pixelRatio: 2, skipFonts: true, backgroundColor: "#ffffff" }
+      await toPng(cardRef.current, opts) // 첫 호출로 CSS/폰트 로드
+      const dataUrl = await toPng(cardRef.current, opts)
+
+      if (newTab) {
         const res = await fetch(dataUrl)
         const blob = await res.blob()
-        const file = new File([blob], filename, { type: "image/png" })
-        await navigator.share({ files: [file] })
+        const blobUrl = URL.createObjectURL(blob)
+        newTab.location.href = blobUrl
       } else {
-        const dataUrl = await toPng(cardRef.current, opts)
         const link = document.createElement("a")
-        link.download = filename
+        link.download = `devdna-${username ?? "me"}.png`
         link.href = dataUrl
         link.click()
       }
+    } catch {
+      newTab?.close()
     } finally {
       setSaving(false)
     }
@@ -115,7 +118,7 @@ export default function ReportPage() {
                 {saving ? "이미지 생성 중..." : "이미지로 저장하기"}
               </p>
               <p className="mt-0.5 text-xs text-white/70">
-                {isMobile() ? "새 탭에서 길게 눌러 저장" : `devdna-${username ?? "me"}.png`}
+                devdna-{username ?? "me"}.png
               </p>
             </div>
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
