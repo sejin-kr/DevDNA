@@ -157,7 +157,7 @@ export default function ReportPage() {
 
   // ── 카드 슬라이더 뷰 ─────────────────────────────────────────
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-6 bg-zinc-50 px-4 dark:bg-black">
+    <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto bg-zinc-50 px-4 py-6 dark:bg-black">
       <div
         ref={cardRef}
         className="w-full max-w-[400px] overflow-hidden rounded-3xl bg-white shadow-xl dark:bg-zinc-900"
