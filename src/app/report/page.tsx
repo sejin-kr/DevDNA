@@ -32,7 +32,7 @@ export default function ReportPage() {
     if (!raw) { router.replace("/"); return }
     try {
       const parsed = JSON.parse(raw)
-      if (parsed._login && parsed._login !== session?.login) {
+      if (!parsed._login || parsed._login !== session?.login) {
         localStorage.removeItem("devdna_result")
         router.replace("/analyze")
         return
