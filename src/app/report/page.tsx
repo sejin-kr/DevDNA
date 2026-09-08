@@ -28,15 +28,11 @@ export default function ReportPage() {
 
   useEffect(() => {
     if (status === "loading") return
-    const raw = localStorage.getItem("devdna_result")
+    const key = `devdna_result_${session?.login}`
+    const raw = localStorage.getItem(key)
     if (!raw) { router.replace("/"); return }
     try {
       const parsed = JSON.parse(raw)
-      if (!parsed._login || parsed._login !== session?.login) {
-        localStorage.removeItem("devdna_result")
-        router.replace("/analyze")
-        return
-      }
       setResult(parsed)
     } catch { router.replace("/") }
   }, [router, session?.login, status])
@@ -149,7 +145,7 @@ export default function ReportPage() {
         <div className="flex gap-4 text-xs text-zinc-400">
           <button onClick={() => router.push("/")} className="hover:text-zinc-600 dark:hover:text-zinc-200">홈으로</button>
           <span>·</span>
-          <button onClick={() => { localStorage.removeItem("devdna_result"); router.push("/analyze") }} className="hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
+          <button onClick={() => { localStorage.removeItem(`devdna_result_${session?.login}`); router.push("/analyze") }} className="hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
         </div>
       </div>
     )
@@ -200,7 +196,7 @@ export default function ReportPage() {
       <div className="flex gap-4 text-xs text-zinc-400">
         <button onClick={() => router.push("/")} className="hover:text-zinc-600 dark:hover:text-zinc-200">홈으로</button>
         <span>·</span>
-        <button onClick={() => { localStorage.removeItem("devdna_result"); router.push("/analyze") }} className="hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
+        <button onClick={() => { localStorage.removeItem(`devdna_result_${session?.login}`); router.push("/analyze") }} className="hover:text-zinc-600 dark:hover:text-zinc-200">재분석</button>
         <span>·</span>
         <button onClick={saveCard} className="hover:text-zinc-600 dark:hover:text-zinc-200">현재 카드 저장</button>
       </div>

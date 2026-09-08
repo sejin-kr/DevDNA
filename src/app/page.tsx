@@ -68,7 +68,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => {
-                localStorage.removeItem("devdna_result")
+                localStorage.removeItem(`devdna_result_${session?.login}`)
                 signOut()
               }}
               className="text-sm text-zinc-400 underline hover:text-zinc-600"
