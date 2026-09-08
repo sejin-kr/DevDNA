@@ -67,7 +67,10 @@ export default function Home() {
               내 코딩 DNA 분석하기
             </button>
             <button
-              onClick={() => signOut()}
+              onClick={() => {
+                localStorage.removeItem("devdna_result")
+                signOut()
+              }}
               className="text-sm text-zinc-400 underline hover:text-zinc-600"
             >
               로그아웃
